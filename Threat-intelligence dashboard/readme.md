@@ -44,6 +44,31 @@
 
 ---
 
+## Logic
+### Risk Scoring Logic
+**Score = AbuseIPDB Confidence Score (0-100)**
+      **+ (VT Malicious + VT Suspicious detections) × 10**
+      **+ OTX Pulse Count × 5**
+      **+ URLhaus Match (50 if found)**
+
+| Score range     | Severity                                   |
+|------------|--------------------------------------------|
+| > 100      | Critical                                |
+| 51 – 100  | High      |
+| 21 – 50  | Medium|
+| 0 – 20| Low|    
+
+**Rate Limits**
+
+**Built-in rate limiting prevents API throttling:**
+
+| Source      | Requests / Minute                                   |
+|------------|--------------------------------------------|
+| VirusTotal       | 4                                |
+| AbuseIPDB       | 4                 |
+| AlienVault OTX     | 60                              |
+| URLhaus      | 10      |
+
 ##  Requirements
 
 ### System
@@ -95,4 +120,8 @@ Obtain free API keys from:
     
 `URLHAUS_KEY = "urlhaus_api_key"`
 
+4. **To run the application**
 
+`streamlit run dashboard.py`
+
+**The application opens at http://localhost:8501 by default**
