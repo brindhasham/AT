@@ -125,3 +125,21 @@ Obtain free API keys from:
 `streamlit run dashboard.py`
 
 **The application opens at http://localhost:8501 by default**
+
+ **Usage**
+**Single IOC Analysis**
+
+- **Ensure Bulk Mode toggle is OFF**
+- **Enter an indicator in the input field (e.g., 8.8.8.8)**
+- **Click Analyze**
+- **Review the risk score, severity, and per-source results**
+- **Expand Technical Details for raw API responses**
+- **Click Export MISP to download the JSON report**
+
+**Bulk Analysis**
+
+- **Enable the Bulk Mode toggle**
+- **Enter up to 5 indicators, one per line**
+- **Click Analyze**
+- **Each indicator is enriched and displayed as a separate card**
+
