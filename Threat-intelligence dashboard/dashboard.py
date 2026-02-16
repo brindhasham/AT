@@ -132,7 +132,7 @@ def misp_exp(ioc, t, s, r):
     lvl = "1" if s > 100 else "2" if s > 50 else "3" if s > 20 else "4"
     return json.dumps({"Event": {"info": f"TI: {ioc}", "threat_level_id": lvl, "Attribute": [{"type": {"ip4": "ip-dst", "ip6": "ip-dst", "md5": "md5", "sha1": "sha1", "sha256": "sha256", "domain": "domain", "url": "url"}.get(t, "text"), "value": ioc, "to_ids": s > 50, "comment": f"Risk: {s}"}] + [{"type": "comment", "value": f"{k}: {v.get('data') if v.get('ok') else v.get('error', 'failed')}"} for k, v in r.items()]}}, indent=2)
 
-# Professional UI Styling
+# UI
 st.markdown("""
 <style>
     .main-header {font-size: 1.75rem; font-weight: 600; color: #111827; margin-bottom: 0.25rem;}
@@ -153,7 +153,7 @@ st.markdown("""
 st.markdown('<div class="main-header">Threat Intelligence Analyzer</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Multi-source IOC enrichment and risk assessment platform</div>', unsafe_allow_html=True)
 
-# Input Section with Bulk Toggle in Main UI
+# Bulk Toggle
 input_col, mode_col = st.columns([4, 1])
 with input_col:
     if 'bulk_mode' not in st.session_state:
