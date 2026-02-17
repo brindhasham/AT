@@ -18,7 +18,7 @@
 | URL        | `https://monolith.stone48tyranny.coupons/webclient`       |
 | MD5 Hash   | `d41d8cd98f00b204e9800998ecf8427e`         |
 | SHA1 Hash  | `da39a3ee5e6b4b0d3255bfef95601890afd80709` |
-| SHA256 Hash| `e3b0c44298fc1c149afbf4c8996fb92427ae41e...`|
+| SHA256 Hash| `50e82acecc7e468cf9c9be676d01ae0c07bf9e2629078f0fdaaf7493befb6ba1`|
 
 ### Intelligence Sources
 
