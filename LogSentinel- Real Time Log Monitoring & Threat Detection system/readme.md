@@ -169,5 +169,13 @@ pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
 | **SHA256 Hash**  | **64 hex chars**    | **`50e82acecc7e468cf9c9be676d01ae0c07bf9e2629078f0fdaaf7493befb6ba1`** |
 
 
+---
+
+### **Working screensnips**
+
+![](https://github.com/brindhasham/l_analysis/blob/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system/screensnips/Batch.png)
+![](https://github.com/brindhasham/l_analysis/blob/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system/screensnips/RTM.png)
+![](https://github.com/brindhasham/l_analysis/blob/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system/screensnips/IOC.png)
+
 
 
