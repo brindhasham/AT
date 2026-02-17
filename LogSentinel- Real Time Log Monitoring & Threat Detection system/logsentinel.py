@@ -40,7 +40,6 @@ def get_config():
 CONFIG = get_config()
 RATE_LIMITS = {"virustotal": 4, "abuseipdb": 5, "otx": 60, "urlhaus": 10}
 
-
 class RateLimiter:
     def __init__(self):
         self.last_request = {}
@@ -63,7 +62,6 @@ class RateLimiter:
             self.last_request[source] = time.time()
 
 rate_limiter = RateLimiter()
-
 
 def detect_ioc_type(ioc: str) -> Tuple[str, str]:
     ioc = ioc.strip()
@@ -97,7 +95,6 @@ def detect_ioc_type(ioc: str) -> Tuple[str, str]:
                 return 'domain', ioc_lower
 
     return 'unknown', ioc
-
 
 class ThreatIntelClient:
     def __init__(self):
@@ -369,6 +366,94 @@ class ThreatIntelClient:
 
 ti_client = ThreatIntelClient()
 
+class CorrelationEngine:
+    def __init__(self):
+        self.events = defaultdict(list)
+        self.time_window = timedelta(minutes=10)
+        self._lock = threading.Lock()
+    
+    def add_event(self, parsed: Dict, alert: Optional[Dict] = None) -> Optional[Dict]:
+        with self._lock:
+            username = parsed.get('username')
+            if not username:
+                return None
+            
+            now = datetime.now()
+            self._cleanup_old_events(username, now)
+            
+            event_type = self._classify_event(parsed, alert)
+            if not event_type:
+                return None
+            
+            self.events[username].append({
+                'timestamp': now,
+                'type': event_type,
+                'ip': parsed.get('source_ip'),
+                'alert_type': alert.get('type') if alert else None
+            })
+            
+            return self._check_pattern(username, now)
+    
+    def _classify_event(self, parsed: Dict, alert: Optional[Dict]) -> Optional[str]:
+        event_type = parsed.get('event_type', '')
+        message = parsed.get('message', '').lower()
+        
+        if event_type in ['failed_login', 'failed_auth']:
+            return 'failed_login'
+        elif event_type in ['successful_login', 'success']:
+            return 'successful_login'
+        elif 'sudo' in message:
+            return 'sudo'
+        return None
+    
+    def _cleanup_old_events(self, username: str, now: datetime):
+        if username not in self.events:
+            return
+        
+        cutoff = now - self.time_window
+        self.events[username] = [
+            e for e in self.events[username]
+            if e['timestamp'] > cutoff
+        ]
+    
+    def _check_pattern(self, username: str, now: datetime) -> Optional[Dict]:
+        events = self.events.get(username, [])
+        if len(events) < 3:
+            return None
+        
+        recent_events = events[-10:]
+        
+        for i in range(len(recent_events) - 1, -1, -1):
+            if recent_events[i]['type'] == 'sudo':
+                for j in range(i - 1, -1, -1):
+                    if recent_events[j]['type'] == 'successful_login':
+                        failed_count = 0
+                        success_ip = recent_events[j]['ip']
+                        for k in range(j - 1, -1, -1):
+                            if recent_events[k]['type'] == 'failed_login':
+                                failed_count += 1
+                            else:
+                                break
+                        
+                        if failed_count >= 5:
+                            sudo_time = recent_events[i]['timestamp']
+                            success_time = recent_events[j]['timestamp']
+                            first_fail_time = recent_events[j - failed_count]['timestamp']
+                            
+                            if (sudo_time - first_fail_time) <= self.time_window:
+                                if recent_events[i]['ip'] == success_ip:
+                                    return {
+                                        'timestamp': now,
+                                        'type': 'Suspicious Account Compromise Chain Detected',
+                                        'severity': 'CRITICAL',
+                                        'source_ip': success_ip,
+                                        'username': username,
+                                        'details': f'Pattern detected: {failed_count} failed logins → successful login → sudo from IP {success_ip}',
+                                        'mitre': 'T1078',
+                                        'raw': f'Correlation alert for user {username}'
+                                    }
+        
+        return None
 
 ALLOWED_LOG_DIRS: List[str] = [
     os.path.expanduser("~/logs"),
@@ -420,21 +505,21 @@ def _resolve_and_validate_path(filepath: str) -> Tuple[bool, str, str]:
 
     return True, resolved, ""
 
-
 class UniversalLogParser:
-
     def __init__(self):
         self.patterns = self._compile_patterns()
         self.windows: Dict[str, list] = defaultdict(list)
         self.user_failures: Dict[str, list] = defaultdict(list)
         self.format_stats: Dict[str, int] = defaultdict(int)
         self._last_cleanup = datetime.now()
+        self.correlation_engine = CorrelationEngine()
 
     def reset(self) -> None:
         self.windows.clear()
         self.user_failures.clear()
         self.format_stats.clear()
         self._last_cleanup = datetime.now()
+        self.correlation_engine = CorrelationEngine()
 
     def _compile_patterns(self) -> List[Dict]:
         return [
@@ -567,6 +652,222 @@ class UniversalLogParser:
             if match:
                 return match.group(1)
         return None
+
+    def _extract_iocs_from_alert(self, message: str, alert_type: str) -> Dict:
+        iocs = {}
+        
+        ip_pattern = re.compile(
+            r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
+            r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
+        )
+        ips = ip_pattern.findall(message)
+        
+        user_match = re.search(
+            r'for\s+([a-zA-Z0-9_\-\.]+)', message, re.IGNORECASE
+        )
+        if user_match:
+            iocs['username'] = user_match.group(1)
+        
+        if alert_type == 'BRUTE_FORCE_ATTEMPT':
+            if ips:
+                iocs['ip'] = ips[0]
+                iocs['target_user'] = iocs.get('username')
+                
+        elif alert_type == 'MULTIPLE_LOGIN_FAILURES':
+            if ips:
+                iocs['ip'] = ips[0]
+                iocs['target_user'] = iocs.get('username')
+                
+        elif alert_type == 'REVERSE_SHELL':
+            cmd_match = re.search(
+                r'detected:\s*(.+?)\s*\[ALERT:', message
+            )
+            if cmd_match:
+                iocs['command'] = cmd_match.group(1)
+                conn_match = re.search(
+                    r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{3})\s+(\d+)',
+                    message
+                )
+                if conn_match:
+                    iocs['connectback_ip'] = conn_match.group(1)
+                    iocs['connectback_port'] = conn_match.group(2)
+                    
+        elif alert_type == 'MALICIOUS_IP_COMMUNICATION':
+            if len(ips) >= 2:
+                iocs['src_ip'] = ips[0]
+                iocs['dst_ip'] = ips[1]
+                iocs['ip'] = ips[1]
+            elif ips:
+                iocs['ip'] = ips[0]
+                
+        elif alert_type == 'PRIV_ESCALATION':
+            iocs['target_user'] = iocs.get('username')
+            
+        elif alert_type == 'MALWARE_DOWNLOAD':
+            url_match = re.search(
+                r'(https?://[^\s\[\]]+)', message
+            )
+            if url_match:
+                iocs['url'] = url_match.group(1)
+                domain_match = re.search(
+                    r'https?://([^/:\s]+)', message
+                )
+                if domain_match:
+                    iocs['domain'] = domain_match.group(1)
+                    
+        elif alert_type == 'SQL_INJECTION':
+            path_match = re.search(
+                r"request\s+'([^']+)'", message
+            )
+            if path_match:
+                iocs['path'] = path_match.group(1)
+            sql_match = re.search(
+                r"(\S+\s*=\s*'\s*\d+\s+OR\s+\d+\s*=\s*\d+')", message
+            )
+            if sql_match:
+                iocs['sql_pattern'] = sql_match.group(1)
+                
+        elif alert_type == 'MALWARE_DETECTED':
+            file_match = re.search(
+                r'in\s+file\s+(\S+)', message
+            )
+            if file_match:
+                iocs['file_path'] = file_match.group(1)
+            hash_match = re.search(
+                r'[a-f0-9]{32,64}', message
+            )
+            if hash_match:
+                iocs['hash'] = hash_match.group(0)
+                
+        elif alert_type == 'PROCESS_ANOMALY':
+            proc_match = re.search(
+                r'from\s+(\S+)', message
+            )
+            if proc_match:
+                iocs['process'] = proc_match.group(1)
+        
+        elif alert_type == 'SUSPICIOUS_LOGIN_SUCCESS':
+            if ips:
+                iocs['ip'] = ips[0]
+            iocs['username'] = iocs.get('username')
+            
+        elif alert_type == 'SUDO_PRIVILEGE_USED':
+            sudo_user_match = re.search(
+                r'sudo:\s+([a-zA-Z0-9_\-\.]+)', message, re.IGNORECASE
+            )
+            if sudo_user_match:
+                iocs['username'] = sudo_user_match.group(1)
+            cmd_match = re.search(
+                r'COMMAND=(\S+)', message
+            )
+            if cmd_match:
+                iocs['command'] = cmd_match.group(1)
+                
+        elif alert_type == 'PERSISTENCE_MECHANISM':
+            file_match = re.search(
+                r'(\S+)', message
+            )
+            if file_match:
+                iocs['file_path'] = message.split()[-1].rstrip(']')
+                
+        elif alert_type == 'SUSPICIOUS_SERVICE_CREATION':
+            service_match = re.search(
+                r"'([^']+)'", message
+            )
+            if service_match:
+                iocs['service_name'] = service_match.group(1)
+                
+        elif alert_type == 'SUSPICIOUS_DOWNLOAD':
+            url_match = re.search(
+                r'(https?://[^\s\[\]]+)', message
+            )
+            if url_match:
+                iocs['url'] = url_match.group(1)
+            path_match = re.search(
+                r'-O\s+(\S+)', message
+            )
+            if path_match:
+                iocs['file_path'] = path_match.group(1)
+                
+        elif alert_type == 'EXECUTION_OF_UNKNOWN_BINARY':
+            exec_match = re.search(
+                r'(\S+)', message
+            )
+            if exec_match:
+                iocs['file_path'] = message.split()[-1].rstrip(']')
+                
+        elif alert_type == 'C2_CONNECTION':
+            conn_match = re.search(
+                r'to\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)', message
+            )
+            if conn_match:
+                iocs['c2_ip'] = conn_match.group(1)
+                iocs['c2_port'] = conn_match.group(2)
+                
+        elif alert_type == 'PRIVILEGE_PERSISTENCE':
+            user_match = re.search(
+                r':\s+([a-zA-Z0-9_\-\.]+)', message
+            )
+            if user_match:
+                iocs['username'] = user_match.group(1)
+                
+        elif alert_type == 'DATA_EXFILTRATION_ATTEMPT':
+            domain_match = re.search(
+                r'to\s+(\S+)', message
+            )
+            if domain_match:
+                iocs['domain'] = domain_match.group(1)
+                
+        elif alert_type == 'CRYPTO_MINING_ACTIVITY':
+            proc_match = re.search(
+                r'from\s+process\s+(\S+)', message
+            )
+            if proc_match:
+                iocs['process'] = proc_match.group(1)
+                
+        elif alert_type == 'CREDENTIAL_ACCESS':
+            file_match = re.search(
+                r'to\s+(\S+)', message
+            )
+            if file_match:
+                iocs['file_accessed'] = file_match.group(1)
+                
+        elif alert_type == 'LATERAL_MOVEMENT':
+            if len(ips) >= 1:
+                iocs['src_ip'] = ips[0]
+            target_match = re.search(
+                r'from\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})', message
+            )
+            if target_match:
+                iocs['target_ip'] = target_match.group(1)
+                
+        elif alert_type == 'OBFUSCATED_COMMAND':
+            cmd_match = re.search(
+                r'detected\s+(.+)', message
+            )
+            if cmd_match:
+                iocs['command'] = cmd_match.group(1).rstrip(']').strip()
+                
+        elif alert_type == 'RANSOMWARE_ACTIVITY':
+            path_match = re.search(
+                r'in\s+(\S+)', message
+            )
+            if path_match:
+                iocs['file_path'] = path_match.group(1)
+                
+        elif alert_type == 'POSSIBLE_DATA_STAGING':
+            path_match = re.search(
+                r'created\s+(\S+)', message
+            )
+            if path_match:
+                iocs['archive_path'] = path_match.group(1)
+        
+        if ips:
+            iocs['all_ips'] = list(set(ips))
+            if 'ip' not in iocs:
+                iocs['ip'] = ips[0]
+                
+        return iocs
 
     def _heuristic_parse(self, line: str) -> Dict:
         ips = self._extract_ips(line)
@@ -727,7 +1028,12 @@ class UniversalLogParser:
         msg = str(result.get('message', ''))
         msg_lower = msg.lower()
 
-        if pattern_def['type'] == 'syslog':
+        alert_match = re.search(r'\[ALERT:\s*([A-Z_]+)\s*\]', msg)
+        if alert_match:
+            result['alert_type'] = alert_match.group(1)
+            result['event_type'] = 'security_alert'
+            result['iocs'] = self._extract_iocs_from_alert(msg, result['alert_type'])
+        elif pattern_def['type'] == 'syslog':
             if not result['source_ip']:
                 ip_match = re.search(
                     r'from\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})',
@@ -789,6 +1095,85 @@ class UniversalLogParser:
                     del self.user_failures[user]
             self._last_cleanup = now
 
+        if event_type == 'security_alert':
+            alert_type = parsed.get('alert_type')
+            iocs = parsed.get('iocs', {})
+            
+            severity_map = {
+                'BRUTE_FORCE_ATTEMPT': 'HIGH',
+                'MULTIPLE_LOGIN_FAILURES': 'MEDIUM',
+                'REVERSE_SHELL': 'CRITICAL',
+                'MALICIOUS_IP_COMMUNICATION': 'HIGH',
+                'PRIV_ESCALATION': 'CRITICAL',
+                'MALWARE_DOWNLOAD': 'CRITICAL',
+                'SQL_INJECTION': 'CRITICAL',
+                'MALWARE_DETECTED': 'HIGH',
+                'PROCESS_ANOMALY': 'MEDIUM',
+                'SUSPICIOUS_LOGIN_SUCCESS': 'HIGH',
+                'SUDO_PRIVILEGE_USED': 'HIGH',
+                'PERSISTENCE_MECHANISM': 'CRITICAL',
+                'SUSPICIOUS_SERVICE_CREATION': 'CRITICAL',
+                'SUSPICIOUS_DOWNLOAD': 'CRITICAL',
+                'EXECUTION_OF_UNKNOWN_BINARY': 'CRITICAL',
+                'C2_CONNECTION': 'CRITICAL',
+                'PRIVILEGE_PERSISTENCE': 'CRITICAL',
+                'DATA_EXFILTRATION_ATTEMPT': 'CRITICAL',
+                'CRYPTO_MINING_ACTIVITY': 'CRITICAL',
+                'CREDENTIAL_ACCESS': 'CRITICAL',
+                'LATERAL_MOVEMENT': 'CRITICAL',
+                'OBFUSCATED_COMMAND': 'CRITICAL',
+                'RANSOMWARE_ACTIVITY': 'CRITICAL',
+                'POSSIBLE_DATA_STAGING': 'HIGH',
+            }
+            
+            mitre_map = {
+                'BRUTE_FORCE_ATTEMPT': 'T1110',
+                'MULTIPLE_LOGIN_FAILURES': 'T1110',
+                'REVERSE_SHELL': 'T1059',
+                'MALICIOUS_IP_COMMUNICATION': 'T1071',
+                'PRIV_ESCALATION': 'T1068',
+                'MALWARE_DOWNLOAD': 'T1204',
+                'SQL_INJECTION': 'T1190',
+                'MALWARE_DETECTED': 'T1204',
+                'PROCESS_ANOMALY': 'T1055',
+                'SUSPICIOUS_LOGIN_SUCCESS': 'T1078',
+                'SUDO_PRIVILEGE_USED': 'T1548',
+                'PERSISTENCE_MECHANISM': 'T1053',
+                'SUSPICIOUS_SERVICE_CREATION': 'T1543',
+                'SUSPICIOUS_DOWNLOAD': 'T1105',
+                'EXECUTION_OF_UNKNOWN_BINARY': 'T1204',
+                'C2_CONNECTION': 'T1071',
+                'PRIVILEGE_PERSISTENCE': 'T1548',
+                'DATA_EXFILTRATION_ATTEMPT': 'T1041',
+                'CRYPTO_MINING_ACTIVITY': 'T1496',
+                'CREDENTIAL_ACCESS': 'T1003',
+                'LATERAL_MOVEMENT': 'T1021',
+                'OBFUSCATED_COMMAND': 'T1027',
+                'RANSOMWARE_ACTIVITY': 'T1486',
+                'POSSIBLE_DATA_STAGING': 'T1074',
+            }
+            
+            details = parsed.get('message', '')
+            details = re.sub(r'\s*\[ALERT:\s*[A-Z_]+\s*\]$', '', details)
+            
+            alert = {
+                'timestamp': parsed.get('timestamp', now),
+                'type': alert_type.replace('_', ' '),
+                'severity': severity_map.get(alert_type, 'CRITICAL'),
+                'source_ip': iocs.get('ip'),
+                'username': iocs.get('username'),
+                'details': details,
+                'mitre': mitre_map.get(alert_type, 'T1000'),
+                'raw': raw,
+                'iocs': iocs
+            }
+            alerts.append(alert)
+            correlation_alert = self.correlation_engine.add_event(parsed, alert)
+            if correlation_alert:
+                alerts.append(correlation_alert)
+            
+            return alerts
+
         if event_type in ['failed_login', 'failed_auth'] and ip:
             key = f"{ip}:{event_type}"
             self.windows[key].append(
@@ -807,7 +1192,7 @@ class UniversalLogParser:
                     else "HIGH" if attempts >= 10
                     else "MEDIUM"
                 )
-                alerts.append({
+                alert = {
                     'timestamp': now,
                     'type': f'Brute Force ({parsed.get("format", "unknown")})',
                     'severity': severity,
@@ -816,7 +1201,11 @@ class UniversalLogParser:
                     'details': f"{attempts} failed attempts detected",
                     'mitre': 'T1110',
                     'raw': raw
-                })
+                }
+                alerts.append(alert)
+                correlation_alert = self.correlation_engine.add_event(parsed, alert)
+                if correlation_alert:
+                    alerts.append(correlation_alert)
 
             if username:
                 self.user_failures[username].append(
@@ -824,6 +1213,7 @@ class UniversalLogParser:
                 )
 
         elif event_type in ['successful_login', 'success'] and (ip or username):
+            alert = None
             if username and username in self.user_failures:
                 failures = self.user_failures[username]
                 failure_count = len(failures)
@@ -834,7 +1224,7 @@ class UniversalLogParser:
                 current_ip = ip or 'unknown'
 
                 if current_ip in failure_ips and failure_count >= 3:
-                    alerts.append({
+                    alert = {
                         'timestamp': now,
                         'type': 'ACCOUNT COMPROMISE (Lockout Bypass)',
                         'severity': 'CRITICAL',
@@ -846,9 +1236,9 @@ class UniversalLogParser:
                         ),
                         'mitre': 'T1078',
                         'raw': raw
-                    })
+                    }
                 elif current_ip not in failure_ips:
-                    alerts.append({
+                    alert = {
                         'timestamp': now,
                         'type': 'CONFIRMED ACCOUNT COMPROMISE (Cross-IP)',
                         'severity': 'CRITICAL',
@@ -861,7 +1251,7 @@ class UniversalLogParser:
                         ),
                         'mitre': 'T1078',
                         'raw': raw
-                    })
+                    }
 
                 del self.user_failures[username]
 
@@ -871,7 +1261,7 @@ class UniversalLogParser:
                         key.startswith(f"{ip}:")
                         and len(self.windows[key]) >= 3
                     ):
-                        alerts.append({
+                        alert = {
                             'timestamp': now,
                             'type': 'Login After Failed Attempts',
                             'severity': 'HIGH',
@@ -883,9 +1273,15 @@ class UniversalLogParser:
                             ),
                             'mitre': 'T1078',
                             'raw': raw
-                        })
+                        }
                         del self.windows[key]
                         break
+            
+            if alert:
+                alerts.append(alert)
+                correlation_alert = self.correlation_engine.add_event(parsed, alert)
+                if correlation_alert:
+                    alerts.append(correlation_alert)
 
         elif event_type == 'web_access':
             status = parsed.get('status_code', 0)
@@ -899,7 +1295,7 @@ class UniversalLogParser:
                 'SELECT+', 'UNION+', '<SCRIPT', 'NULL',
                 'UNDEFINED', '../../'
             ]):
-                alerts.append({
+                alert = {
                     'timestamp': now,
                     'type': 'Web Attack (Injection)',
                     'severity': 'CRITICAL',
@@ -907,10 +1303,14 @@ class UniversalLogParser:
                     'details': f"Malicious pattern: {path[:60]}",
                     'mitre': 'T1059',
                     'raw': raw
-                })
+                }
+                alerts.append(alert)
+                correlation_alert = self.correlation_engine.add_event(parsed, alert)
+                if correlation_alert:
+                    alerts.append(correlation_alert)
 
             if 'googlebot' in ua and ip and not ip.startswith('66.249.'):
-                alerts.append({
+                alert = {
                     'timestamp': now,
                     'type': 'Fake Crawler',
                     'severity': 'MEDIUM',
@@ -918,7 +1318,11 @@ class UniversalLogParser:
                     'details': f"IP {ip} claims Googlebot",
                     'mitre': 'T1071',
                     'raw': raw
-                })
+                }
+                alerts.append(alert)
+                correlation_alert = self.correlation_engine.add_event(parsed, alert)
+                if correlation_alert:
+                    alerts.append(correlation_alert)
 
             if status in [401, 403] and ip:
                 self.windows[ip].append(
@@ -930,7 +1334,7 @@ class UniversalLogParser:
                     and e.get('type') == 'web_auth_fail'
                 ]
                 if len(recent) == 20:
-                    alerts.append({
+                    alert = {
                         'timestamp': now,
                         'type': 'Web Auth Brute Force',
                         'severity': 'HIGH',
@@ -938,19 +1342,20 @@ class UniversalLogParser:
                         'details': "20 auth failures in 5 minutes",
                         'mitre': 'T1110',
                         'raw': raw
-                    })
+                    }
+                    alerts.append(alert)
+                    correlation_alert = self.correlation_engine.add_event(parsed, alert)
+                    if correlation_alert:
+                        alerts.append(correlation_alert)
 
         return alerts
 
     def get_stats(self) -> Dict:
         return dict(self.format_stats)
 
-
 LogParser = UniversalLogParser
 
-
 class RealTimeLogStreamer:
-
     def __init__(self):
         self.active = False
         self.line_queue: queue.Queue = queue.Queue(maxsize=10000)
@@ -959,6 +1364,7 @@ class RealTimeLogStreamer:
         self.threads: List[threading.Thread] = []
         self._parser = UniversalLogParser()
         self._stop_event = threading.Event()
+        self._file_path = None
 
     def validate_and_start(self, filepath: str) -> bool:
         ok, resolved, error = _resolve_and_validate_path(filepath)
@@ -966,33 +1372,59 @@ class RealTimeLogStreamer:
             st.error(f"[ERROR] {error}")
             return False
 
-        self._start_file_tail(resolved)
+        self._file_path = resolved
+        self._stop_event.clear()
+        self._start_file_tail()
         self._start_processor()
         self.active = True
+        logger.info(f"Started streaming: {resolved}")
         return True
 
-    def _start_file_tail(self, filepath: str):
+    def _start_file_tail(self):
         def tail():
-            try:
-                with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-                    f.seek(0, 2)
-                    while not self._stop_event.is_set():
-                        line = f.readline()
-                        if not line:
-                            time.sleep(0.1)
-                            continue
-                        try:
-                            self.line_queue.put(line.strip(), block=False)
-                        except queue.Full:
+            last_inode = None
+            last_pos = 0
+            
+            while not self._stop_event.is_set():
+                try:
+                    if not os.path.exists(self._file_path):
+                        logger.warning(f"File not found: {self._file_path}")
+                        time.sleep(1)
+                        continue
+                        
+                    stat = os.stat(self._file_path)
+                    current_inode = stat.st_ino
+                    
+                    if last_inode is not None and current_inode != last_inode:
+                        logger.info(f"File rotated: {self._file_path}")
+                        last_pos = 0
+                    
+                    last_inode = current_inode
+                    
+                    with open(self._file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        f.seek(last_pos)
+                        
+                        while not self._stop_event.is_set():
+                            line = f.readline()
+                            if not line:
+                                break
+                            
                             try:
-                                self.line_queue.get_nowait()
-                                self.line_queue.put(
-                                    line.strip(), block=False
-                                )
-                            except queue.Empty:
-                                pass
-            except Exception as e:
-                logger.error(f"Tail error: {e}")
+                                self.line_queue.put(line.strip(), block=False)
+                                last_pos = f.tell()
+                            except queue.Full:
+                                try:
+                                    self.line_queue.get_nowait()
+                                    self.line_queue.put(line.strip(), block=False)
+                                    last_pos = f.tell()
+                                except queue.Empty:
+                                    pass
+                    
+                    time.sleep(0.5)
+                    
+                except Exception as e:
+                    logger.error(f"Tail error: {e}")
+                    time.sleep(1)
 
         t = threading.Thread(target=tail, daemon=True)
         add_script_run_ctx(t)
@@ -1025,33 +1457,37 @@ class RealTimeLogStreamer:
         self.threads.append(t)
 
     def get_pending_items(self) -> Tuple[List[Dict], List[Dict]]:
-        alerts: List[Dict] = []
-        logs: List[Dict] = []
-
-        while not self.alert_queue.empty():
+        alerts = []
+        logs = []
+        
+        while True:
             try:
-                alerts.append(self.alert_queue.get_nowait())
+                alert = self.alert_queue.get_nowait()
+                alerts.append(alert)
             except queue.Empty:
                 break
-
+        
         count = 0
-        while not self.raw_log_queue.empty() and count < 100:
+        while count < 100:
             try:
-                logs.append(self.raw_log_queue.get_nowait())
+                log = self.raw_log_queue.get_nowait()
+                logs.append(log)
                 count += 1
             except queue.Empty:
                 break
-
+        
         return alerts, logs
 
     def stop(self):
         self._stop_event.set()
         self.active = False
+        logger.info("Stopping stream...")
+        
         for t in self.threads:
-            t.join(timeout=2)
+            t.join(timeout=3)
+            
         self.threads.clear()
         self._parser.reset()
-
 
 def render_ioc_card(ioc: str, ioc_type: str, result: Dict):
     score = result.get("overall_score", 0)
@@ -1274,7 +1710,6 @@ def render_ioc_card(ioc: str, ioc_type: str, result: Dict):
     with st.expander("View Raw Data"):
         st.json(result)
 
-
 def render_alert_card(alert: Dict):
     colors = {
         "CRITICAL": "#dc2626", "HIGH": "#ea580c",
@@ -1308,10 +1743,25 @@ def render_alert_card(alert: Dict):
     </div>
     """, unsafe_allow_html=True)
 
+    iocs = alert.get('iocs', {})
+    if iocs:
+        with st.expander("Related IoCs"):
+            cols = st.columns(min(len(iocs), 4))
+            for idx, (ioc_type, ioc_value) in enumerate(iocs.items()):
+                if ioc_type in ['ip', 'domain', 'url'] and ioc_value:
+                    with cols[idx % len(cols)]:
+                        st.code(f"{ioc_type}: {ioc_value}", language='text')
+                        btn_key = f"enrich_{alert['timestamp']}_{ioc_type}_{ioc_value}"
+                        if st.button(f"Enrich {ioc_type}", key=btn_key):
+                            st.session_state['enrich_ioc'] = {
+                                'ioc': ioc_value,
+                                'type': ioc_type
+                            }
+                            st.rerun()
+
     if 'raw' in alert and alert['raw']:
         with st.expander("View Raw Log Entry"):
             st.code(alert['raw'], language='text')
-
 
 def init_state():
     defaults = {
@@ -1330,13 +1780,11 @@ def init_state():
         if k not in st.session_state:
             st.session_state[k] = v
 
-
 def add_timeline(msg: str):
     ts = datetime.now().strftime("%H:%M:%S.%f")[:-3]
     st.session_state.timeline.append(f"[{ts}] {msg}")
     if len(st.session_state.timeline) > 1000:
         st.session_state.timeline = st.session_state.timeline[-1000:]
-
 
 def main():
     st.set_page_config(
@@ -1351,12 +1799,24 @@ def main():
     if st.session_state.parser is None:
         st.session_state.parser = UniversalLogParser()
 
+    if 'enrich_ioc' in st.session_state:
+        ioc_data = st.session_state.pop('enrich_ioc')
+        st.info(f"Enriching {ioc_data['type']}: {ioc_data['ioc']}")
+        st.session_state.last_ioc = {
+            'ioc': ioc_data['ioc'],
+            'type': ioc_data['type'],
+            'data': ti_client.enrich(ioc_data['ioc'], ioc_data['type'])
+        }
+        st.session_state['mode'] = 'IOC Lookup'
+        st.rerun()
+
     with st.sidebar:
         st.header("Control Panel")
 
         mode = st.radio(
             "Operation Mode",
-            ["Batch Analysis", "Real-time Stream", "IOC Lookup"]
+            ["Batch Analysis", "Real-time Stream", "IOC Lookup"],
+            key="mode_selector"
         )
 
         if mode == "IOC Lookup":
@@ -1442,6 +1902,14 @@ def main():
                     st.button("Start Stream", use_container_width=True)
                     and not is_active
                 ):
+                    st.session_state.events = []
+                    st.session_state.stats = {
+                        'total_logs': 0,
+                        'unique_ips': set(),
+                        'alerts_by_severity': Counter()
+                    }
+                    st.session_state.timeline = []
+                    
                     st.session_state.streamer = RealTimeLogStreamer()
                     if st.session_state.streamer.validate_and_start(path):
                         add_timeline("Stream started")
@@ -1454,7 +1922,8 @@ def main():
                     st.button("Stop Stream", use_container_width=True)
                     and is_active
                 ):
-                    st.session_state.streamer.stop()
+                    if st.session_state.streamer:
+                        st.session_state.streamer.stop()
                     st.session_state.streamer = None
                     add_timeline("Stream stopped")
                     st.rerun()
@@ -1644,66 +2113,48 @@ def main():
                 )
 
     else:
-        if st.session_state.streamer and st.session_state.streamer.active:
-            new_alerts, new_logs = (
-                st.session_state.streamer.get_pending_items()
-            )
-
-            if new_alerts or new_logs:
-                for alert in new_alerts:
-                    st.session_state.events.append(alert)
-                    st.session_state.stats[
-                        'alerts_by_severity'
-                    ][alert['severity']] += 1
-                    add_timeline(
-                        f"ALERT: {alert['type']} from {alert['source_ip']}"
-                    )
-
-                for log in new_logs:
-                    st.session_state.stats['total_logs'] += 1
-                    parsed = log['data']
-                    ip = parsed.get('source_ip')
-                    if ip:
-                        st.session_state.stats['unique_ips'].add(ip)
-
-                time.sleep(0.1)
-                st.rerun()
-
+        streamer = st.session_state.streamer
+        
+        if streamer and streamer.active:
+            new_alerts, new_logs = streamer.get_pending_items()
+            
+            for alert in new_alerts:
+                st.session_state.events.append(alert)
+                st.session_state.stats['alerts_by_severity'][alert['severity']] += 1
+            
+            for log in new_logs:
+                st.session_state.stats['total_logs'] += 1
+                ip = log['data'].get('source_ip')
+                if ip:
+                    st.session_state.stats['unique_ips'].add(ip)
+        
         if st.session_state.events:
-            st.subheader(
-                f"Live Alert Feed ({len(st.session_state.events)} alerts)"
-            )
-
+            st.subheader(f"Live Alert Feed ({len(st.session_state.events)} alerts)")
+            
             severities = st.multiselect(
                 "Filter by Severity",
                 ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
                 default=["CRITICAL", "HIGH", "MEDIUM"]
             )
+            
             filtered = [
                 a for a in st.session_state.events
                 if a['severity'] in severities
             ][-50:]
-
+            
             for alert in reversed(filtered):
                 render_alert_card(alert)
         else:
-            st.info(
-                "Real-time stream is active. "
-                "Alerts will appear here when detected."
-            )
-            st.caption(
-                "Note: Streaming monitors for new lines appended to "
-                "the log file after Start was clicked."
-            )
-
+            st.info("Real-time stream is active. Alerts will appear here when detected.")
+            st.caption("Monitoring for new log entries...")
+        
         with st.expander("Event Timeline"):
             for e in reversed(st.session_state.timeline[-100:]):
                 st.text(e)
-
-        if st.session_state.streamer and st.session_state.streamer.active:
-            time.sleep(2)
+        
+        if streamer and streamer.active:
+            time.sleep(1)
             st.rerun()
-
 
 if __name__ == "__main__":
     main()
