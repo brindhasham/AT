@@ -1,0 +1,9 @@
+Mar 15 10:23:45 server sshd[1234]: Failed password for admin from 192.168.1.100 port 54322
+Mar 15 10:23:46 server sshd[1234]: Failed password for admin from 192.168.1.100 port 54322
+Mar 15 10:23:47 server sshd[1234]: Failed password for admin from 192.168.1.100 port 54322
+Mar 15 10:23:48 server sshd[1234]: Failed password for root from 192.168.1.100 port 54322
+Mar 15 10:23:49 server sshd[1234]: Failed password for root from 192.168.1.100 port 54322
+Mar 15 10:23:50 server sshd[1234]: Failed password for root from 192.168.1.100 port 54322
+Mar 15 10:23:51 server sshd[1234]: Failed password for root from 192.168.1.100 port 54322
+Mar 15 10:23:52 server sshd[1234]: Failed password for root from 192.168.1.100 port 54322
+Mar 15 10:23:53 server sshd[1234]: Accepted password for admin from 10.0.0.50 port 12345
