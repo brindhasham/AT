@@ -7,24 +7,27 @@
 
 ---
 
-## **Universal Log Parsing**
+## **General features**
 
-- **Auto-detection of 7+ log formats with zero manual configuration**
-- **Regex-based pattern matching with intelligent fallback to heuristic parsing**
-- **Automatic field normalization (timestamps, IPs, usernames, messages) across all formats**
-- **JSON structured log ingestion with flexible field mapping (30+ field name variants)**
-- **Format statistics tracking for log source visibility**
+- **Auto-detection of 10+ log formats with zero manual configuration**
+- **Real-time Detection: Identifies threats as they happen with streaming analysis**
+- **Threat Intelligence: Enriches IOCs with data from VirusTotal, AbuseIPDB, OTX, and URLhaus**
+- **Attack Correlation: Connects related events to detect sophisticated multi-stage attacks**
+- **Zero Infrastructure: Runs entirely in browser—no database or backend required**
 
 ---
 
-## **Behavioral Threat Detection Engine**
+## **Security features**
 
-- **Brute Force Detection — Sliding-window analysis tracking failed authentication attempts per IP with escalating severity thresholds (5/10/20 attempts → MEDIUM/HIGH/CRITICAL)**
-- **Account Compromise Detection- Correlates successful logins following failed attempts, detecting bothsame-IP lockout bypass and cross-IP attack patterns**
-- **Web Application Attack Detection — Identifies SQL injection, XSS, path traversal, and other injection patterns in HTTP request paths**
-- **Fake Crawler Detection — Flags requests claiming to be Googlebot from non-Google IP ranges**
-- **Web Auth Brute Force — Tracks HTTP 401/403 response floods per source IP**
-- **MITRE ATT&CK Mapping — Every alert is tagged with the corresponding MITRE technique ID**
+| **Feature**                      | **Description**                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Multi-Format Log Parsing**     | **Automatically detects and parses Syslog, Apache, IIS, JSON, Windows Events, Cisco ASA, and more** |
+| **Real-Time Streaming**          | **Monitor log files continuously with live alert generation**                                       |
+| **Brute Force Detection**        | **Identifies password guessing attacks with configurable thresholds**                               |
+| **Account Compromise Detection** | **Detects successful logins following failed attempts**                                             |
+| **Web Attack Detection**         | **Identifies SQL injection, XSS, directory traversal, and other web attacks**                       |
+| **Correlation Engine**           | **Links related events to detect multi-stage attack chains**                                        |
+| **MITRE ATT&CK Mapping**         | **All detections mapped to MITRE ATT&CK framework techniques**                                      |
 
 ---
 
@@ -34,9 +37,16 @@
 - **AbuseIPDB — IP abuse confidence scoring, geolocation, ISP identification, and report history**
 - **OTX AlienVault — Community-driven pulse/threat feed correlation**
 - **URLhaus (abuse.ch) — Malware URL database lookup for active threat identification**
-- **Automatic IOC type detection (IPv4/IPv6, MD5, SHA1, SHA256, domain, URL)**
-- **Unified risk scoring (0–100) with severity classification**
-- **Result caching with configurable TTL to minimize API calls**
+
+---
+
+**Dashboard & Visualization**
+
+**Interactive Dashboard: Real-time alert feeds**
+**Severity-Based Filtering: Focus on critical, high, medium, or low severity alerts**
+**Event Timeline: Chronological view of all security events**
+**IOC Cards: Rich visualization of threat intelligence results**
+**Export Capabilities: JSON, MISP format, and text exports**
 
 ---
 
@@ -50,39 +60,18 @@
 
 ---
 
-## **Interactive Dashboard**
-
-- **Real-time metrics (total logs, unique IPs, alert counts, severity distribution)**
-- **Filterable alert feed with severity-based color coding**
-- **Expandable raw log viewer for forensic investigation**
-- **Event timeline with millisecond-precision timestamps**
-- **One-click export to JSON and MISP format**
-- **Direct pivot links to VirusTotal, AbuseIPDB, and URLhaus**
-
----
-
-## **Built-in Security Controls**
-- **Path traversal prevention — Resolves symlinks and validates against allowed directory whitelist**
-- **System path blocking — Denies access to /etc, /proc, /sys, /dev, /root, /boot, /sbin, /bin**
-- **File size limits — Rejects files exceeding 10 GB**
-- **Rate limiting — Per-source API rate limiting with thread-safe locking**
-- **Input validation — IOC type verification before API submission**
-- **Queue overflow protection — Bounded queues with oldest-entry eviction**
-
-
 ## **Supported Log Formats**
 
-
-| **Format** | **Example** |
-|--------|---------|
-| **Syslog RFC 3164** | **Jan 15 14:23:01 server sshd[1234]: Failed password for root from 192.168.1.100 port 22** |
-| **Syslog RFC 5424** | **<34>1 2024-01-15T14:23:01.000Z server sshd 1234 - - Failed password for root** |
-| **Apache Combined** | **192.168.1.1 - admin [15/Jan/2024:14:23:01 +0000] "GET /admin HTTP/1.1" 401 512 "-" "Mozilla/5.0"** |
-| **IIS W3C** | **2024-01-15 14:23:01 192.168.1.1 GET /login - 443 admin 10.0.0.1 Mozilla/5.0 - 200 0 0** |
-| **Windows Event** | **01/15/2024 02:23:01 PM Error Security 4625 Logon user1 An account failed to log on** |
-| **Cisco ASA** | **Jan 15 2024 14:23:01 firewall-1 : %ASA-4-106023: Deny tcp src inside:10.0.0.1** |
-| **JSON Structured** | **{"timestamp": "2024-01-15T14:23:01Z", "src_ip": "192.168.1.1", "message": "Failed login"}** |
-| **Heuristic Fallback** | **Any text containing recognizable IPs, timestamps, or security keywords** |
+| **Format**          | **Example**                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| **Syslog RFC3164**  | **Jan 15 10:30:45 server sshd[1234]: message**                                               |
+| **Syslog RFC5424**  | **<34>1 2024-01-15T10:30:45.123Z server app 1234 ID47 - message**                            |
+| **Apache Combined** | **192.168.1.1 - user [15/Jan/2024:10:30:45 +0000] "GET /path HTTP/1.1" 200 1234 "ref" "ua"** |
+| **IIS W3C**         | **2024-01-15 10:30:45 192.168.1.1 GET /path - 80 - 10.0.0.1 Mozilla/5.0 - 200 0 0**          |
+| **Windows Event**   | **01/15/2024 10:30:45 AM Information Source 1234 Category User Message**                     |
+| **Cisco ASA**       | **Jan 15 2024 10:30:45 firewall : %ASA-6-302013: message**                                   |
+| **JSON Logs**       | **{"timestamp": "2024-01-15T10:30:45Z", "level": "error", "message": "..."}**                |
+| **Heuristic**       | **Any text containing timestamps, IPs, or security keywords**                                |
 
 
 **All parsed output is normalized into a consistent schema:**
@@ -171,9 +160,7 @@ pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
 
 - **Best for analyzing historical log files and incident investigation**
 - **Upload file containing log in recommended format and analyze**
-- **[Sample data log uploaded](https://github.com/brindhasham/l_analysis/blob/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system/screenshare/auth.log)**
-- **[Data output](https://github.com/brindhasham/l_analysis/blob/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system/screenshare/LogSentinel%20Professional.pdf)**
-  
+
 
 
 
