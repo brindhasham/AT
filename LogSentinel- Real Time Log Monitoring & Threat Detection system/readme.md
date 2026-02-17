@@ -123,6 +123,56 @@
 | **20 – 49** | **🟡 MEDIUM** | **MONITOR — Track Activity** |
 | **0 – 19** | **🟢 CLEAN** | **BENIGN — No Action Needed** |
 
+## Installation
+
+### Prerequisites
+
+- **Python 3.8 or higher**
+- **pip package manager**
+
+```
+
+python -m venv venv
+source venv/bin/activate        # Linux / macOS
+
+# Install dependencies
+pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
+```
+**Obtain free API keys from:**
+
+| **Service** | **Registration URL** |
+|-------------|----------------------|
+| **VirusTotal** | **https://www.virustotal.com/gui/join-us** |
+| **AbuseIPDB** | **https://www.abuseipdb.com/register** |
+| **AlienVault OTX** | **https://otx.alienvault.com/api** |
+| **URLhaus** | **https://urlhaus.abuse.ch/api/** |
+
+
+3. **To configure API keys**
+   
+- `mkdir -p .streamlit`
+
+- `nano .streamlit/secrets.toml`
+
+`VT_KEY = "virustotal_api_key"`
+   
+`ABUSE_KEY = "abuseipdb_api_key"`
+   
+`OTX_KEY = "alienvault_otx_api_key"`
+    
+`URLHAUS_KEY = "urlhaus_api_key"`
+
+### Run the application
+```streamlit run logsentinel.py```
+
+## **Usage**
+
+### **Mode 1: Batch Analysis**
+
+- **Best for analyzing historical log files and incident investigation**
+- **Upload file containing log in recommended format and analyze**
+Sample working:
+
 
 
 
