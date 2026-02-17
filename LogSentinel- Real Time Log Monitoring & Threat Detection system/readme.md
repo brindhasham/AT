@@ -171,8 +171,10 @@ pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
 
 - **Best for analyzing historical log files and incident investigation**
 - **Upload file containing log in recommended format and analyze**
-Sample working:
+**Sample working:**
 
+  <source src="https://raw.githubusercontent.com/brindhasham/l_analysis/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system/screenshare/streamlit-log__pp-2026-02-17-14-28-17-ezgif.com-video-to-mp4-converter.mp4" type="video/mp4">
+</video>
 
 
 
