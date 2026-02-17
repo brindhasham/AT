@@ -73,38 +73,6 @@
 | **JSON Logs**       | **{"timestamp": "2024-01-15T10:30:45Z", "level": "error", "message": "..."}**                |
 | **Heuristic**       | **Any text containing timestamps, IPs, or security keywords**                                |
 
-
-**All parsed output is normalized into a consistent schema:**
-
-```python
-{
-    'timestamp': datetime,       # Parsed or current time
-    'source_ip': str | None,     # Extracted source IP address
-    'username': str | None,      # Extracted username
-    'message': str,              # Log message content
-    'event_type': str,           # Classified event type
-    'format': str,               # Detected log format name
-    'status_code': int | None,   # HTTP status or severity level
-    'raw': str                   # Original unmodified log line
-}
-```
-
-## ** Detection Rules**
-
-| **Rule** | **Trigger** | **Severity** | **MITRE ID** |
-|----------|-------------|--------------|--------------|
-| **Brute Force (Low)** | **≥5 failed auth from same IP in 5 min** | **MEDIUM** | **T1110** |
-| **Brute Force (Med)** | **≥10 failed auth from same IP in 5 min** | **HIGH** | **T1110** |
-| **Brute Force (High)** | **≥20 failed auth from same IP in 5 min** | **CRITICAL** | **T1110** |
-| **Lockout Bypass** | **Successful login after ≥3 failures from same IP** | **CRITICAL** | **T1078** |
-| **Cross-IP Compromise** | **Successful login from new IP after failures from different IP** | **CRITICAL** | **T1078** |
-| **Post-Failure Login** | **Successful login from IP with ≥3 prior failures** | **HIGH** | **T1078** |
-| **SQL Injection** | **SELECT+, UNION+ in HTTP path** | **CRITICAL** | **T1059** |
-| **XSS Attack** | **<SCRIPT in HTTP path** | **CRITICAL** | **T1059** |
-| **Path Traversal** | **../../ in HTTP path** | **CRITICAL** | **T1059** |
-| **Fake Crawler** | **Googlebot UA from non-Google IP** | **MEDIUM** | **T1071** |
-| **Web Auth Brute Force** | **20× HTTP 401/403 from same IP in 5 min** | **HIGH** | **T1110** |
-
 | **Score Range** | **Severity** | **Recommended Action** |
 |-----------------|--------------|------------------------|
 | **80 – 100** | **🔴 CRITICAL** | **BLOCK — Immediate Action Required** |
@@ -156,12 +124,48 @@ pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
 
 ## **Usage**
 
-### **Mode 1: Batch Analysis**
+**Mode 1: Batch Analysis**
 
-- **Best for analyzing historical log files and incident investigation**
-- **Upload file containing log in recommended format and analyze**
+-**How to Use**
+**Select "Batch Analysis" from the sidebar**
+**Upload log file using the file uploader (supports .log, .txt, .csv, .json)**
+**Wait for processing - progress bar shows analysis status**
+**Review alerts - filter by severity (CRITICAL, HIGH, MEDIUM, LOW)**
+**Export results - download alerts as JSON**
 
+**Mode 2: Real-time Monitoring**
 
+**Monitor log files in real-time for live threat detection.**
+
+**Directory Configuration**
+
+**By default, monitoring is restricted to these directories:**
+
+**~/logs**
+**/var/log/app**
+**/opt/logsentinel**
+
+**How to Use**
+
+**Select "Real-time Stream" from the sidebar**
+**Enter log file path (e.g., ~/logs/auth.log)**
+**Click "Start Stream" to begin monitoring**
+**Watch live alerts appear as threats are detected**
+**Click "Stop Stream" when finished**
+
+**Mode 3: IOC Enrichment Analyzer**
+
+**Enrich Indicators of Compromise (IOCs) with threat intelligence from multiple sources.**
+
+| **Type**         | **Format**          | **Example**                                                    |
+| ---------------- | ------------------- | -------------------------------------------------------------- |
+| **IPv4 Address** | **x.x.x.x**         | **8.8.8.8**                                                    |
+| **IPv6 Address** | **Full/compressed** | **2001:4860:4860::8888**                                       |
+| **Domain**       | **FQDN**            | **example.com**                                                |
+| **URL**          | **Full URL**        | **[https://malware.com/payload](https://malware.com/payload)** |
+| **MD5 Hash**     | **32 hex chars**    | **d41d8cd98f00b204e9800998ecf8427e**                           |
+| **SHA1 Hash**    | **40 hex chars**    | **da39a3ee5e6b4b0d3255bfef95601890afd80709**                   |
+| **SHA256 Hash**  | **64 hex chars**    | **50e82acecc7e468cf9c9be676d01ae0c07bf9e2629078f0fdaaf7493befb6ba1**                        |
 
 
 
