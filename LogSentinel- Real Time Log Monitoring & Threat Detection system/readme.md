@@ -58,3 +58,71 @@
 - **Event timeline with millisecond-precision timestamps**
 - **One-click export to JSON and MISP format**
 - **Direct pivot links to VirusTotal, AbuseIPDB, and URLhaus**
+
+---
+
+## **Built-in Security Controls**
+- **Path traversal prevention — Resolves symlinks and validates against allowed directory whitelist**
+- **System path blocking — Denies access to /etc, /proc, /sys, /dev, /root, /boot, /sbin, /bin**
+- **File size limits — Rejects files exceeding 10 GB**
+- **Rate limiting — Per-source API rate limiting with thread-safe locking**
+- **Input validation — IOC type verification before API submission**
+- **Queue overflow protection — Bounded queues with oldest-entry eviction**
+
+
+## **Supported Log Formats**
+
+
+| **Format** | **Example** |
+|--------|---------|
+| **Syslog RFC 3164** | **Jan 15 14:23:01 server sshd[1234]: Failed password for root from 192.168.1.100 port 22** |
+| **Syslog RFC 5424** | **<34>1 2024-01-15T14:23:01.000Z server sshd 1234 - - Failed password for root** |
+| **Apache Combined** | **192.168.1.1 - admin [15/Jan/2024:14:23:01 +0000] "GET /admin HTTP/1.1" 401 512 "-" "Mozilla/5.0"** |
+| **IIS W3C** | **2024-01-15 14:23:01 192.168.1.1 GET /login - 443 admin 10.0.0.1 Mozilla/5.0 - 200 0 0** |
+| **Windows Event** | **01/15/2024 02:23:01 PM Error Security 4625 Logon user1 An account failed to log on** |
+| **Cisco ASA** | **Jan 15 2024 14:23:01 firewall-1 : %ASA-4-106023: Deny tcp src inside:10.0.0.1** |
+| **JSON Structured** | **{"timestamp": "2024-01-15T14:23:01Z", "src_ip": "192.168.1.1", "message": "Failed login"}** |
+| **Heuristic Fallback** | **Any text containing recognizable IPs, timestamps, or security keywords** |
+
+
+**All parsed output is normalized into a consistent schema:**
+
+```python
+{
+    'timestamp': datetime,       # Parsed or current time
+    'source_ip': str | None,     # Extracted source IP address
+    'username': str | None,      # Extracted username
+    'message': str,              # Log message content
+    'event_type': str,           # Classified event type
+    'format': str,               # Detected log format name
+    'status_code': int | None,   # HTTP status or severity level
+    'raw': str                   # Original unmodified log line
+}
+```
+
+## ** Detection Rules**
+
+| **Rule** | **Trigger** | **Severity** | **MITRE ID** |
+|----------|-------------|--------------|--------------|
+| **Brute Force (Low)** | **≥5 failed auth from same IP in 5 min** | **MEDIUM** | **T1110** |
+| **Brute Force (Med)** | **≥10 failed auth from same IP in 5 min** | **HIGH** | **T1110** |
+| **Brute Force (High)** | **≥20 failed auth from same IP in 5 min** | **CRITICAL** | **T1110** |
+| **Lockout Bypass** | **Successful login after ≥3 failures from same IP** | **CRITICAL** | **T1078** |
+| **Cross-IP Compromise** | **Successful login from new IP after failures from different IP** | **CRITICAL** | **T1078** |
+| **Post-Failure Login** | **Successful login from IP with ≥3 prior failures** | **HIGH** | **T1078** |
+| **SQL Injection** | **SELECT+, UNION+ in HTTP path** | **CRITICAL** | **T1059** |
+| **XSS Attack** | **<SCRIPT in HTTP path** | **CRITICAL** | **T1059** |
+| **Path Traversal** | **../../ in HTTP path** | **CRITICAL** | **T1059** |
+| **Fake Crawler** | **Googlebot UA from non-Google IP** | **MEDIUM** | **T1071** |
+| **Web Auth Brute Force** | **20× HTTP 401/403 from same IP in 5 min** | **HIGH** | **T1110** |
+
+| **Score Range** | **Severity** | **Recommended Action** |
+|-----------------|--------------|------------------------|
+| **80 – 100** | **🔴 CRITICAL** | **BLOCK — Immediate Action Required** |
+| **50 – 79** | **🟠 HIGH** | **INVESTIGATE — Review Recommended** |
+| **20 – 49** | **🟡 MEDIUM** | **MONITOR — Track Activity** |
+| **0 – 19** | **🟢 CLEAN** | **BENIGN — No Action Needed** |
+
+
+
+
