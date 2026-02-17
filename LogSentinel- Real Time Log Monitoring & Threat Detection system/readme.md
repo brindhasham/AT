@@ -126,12 +126,13 @@ pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
 
 **Mode 1: Batch Analysis**
 
--**How to Use**
-**Select "Batch Analysis" from the sidebar**
-**Upload log file using the file uploader (supports .log, .txt, .csv, .json)**
-**Wait for processing - progress bar shows analysis status**
-**Review alerts - filter by severity (CRITICAL, HIGH, MEDIUM, LOW)**
-**Export results - download alerts as JSON**
+**How to Use**
+
+- **Select "Batch Analysis" from the sidebar**
+- **Upload log file using the file uploader (supports .log, .txt, .csv, .json)**
+- **Wait for processing - progress bar shows analysis status**
+- **Review alerts - filter by severity (CRITICAL, HIGH, MEDIUM, LOW)**
+- **Export results - download alerts as JSON**
 
 **Mode 2: Real-time Monitoring**
 
@@ -147,25 +148,26 @@ pip install -r requirements.txt (streamlit, pandas, requests, python-dateutil)
 
 **How to Use**
 
-**Select "Real-time Stream" from the sidebar**
-**Enter log file path (e.g., ~/logs/auth.log)**
-**Click "Start Stream" to begin monitoring**
-**Watch live alerts appear as threats are detected**
-**Click "Stop Stream" when finished**
+- **Select "Real-time Stream" from the sidebar**
+- **Enter log file path (e.g., ~/logs/auth.log)**
+- **Click "Start Stream" to begin monitoring**
+- **Watch live alerts appear as threats are detected**
+- **Click "Stop Stream" when finished**
 
 **Mode 3: IOC Enrichment Analyzer**
 
 **Enrich Indicators of Compromise (IOCs) with threat intelligence from multiple sources.**
 
-| **Type**         | **Format**          | **Example**                                                    |
-| ---------------- | ------------------- | -------------------------------------------------------------- |
-| **IPv4 Address** | **x.x.x.x**         | **8.8.8.8**                                                    |
-| **IPv6 Address** | **Full/compressed** | **2001:4860:4860::8888**                                       |
-| **Domain**       | **FQDN**            | **example.com**                                                |
-| **URL**          | **Full URL**        | **[https://malware.com/payload](https://malware.com/payload)** |
-| **MD5 Hash**     | **32 hex chars**    | **d41d8cd98f00b204e9800998ecf8427e**                           |
-| **SHA1 Hash**    | **40 hex chars**    | **da39a3ee5e6b4b0d3255bfef95601890afd80709**                   |
-| **SHA256 Hash**  | **64 hex chars**    | **50e82acecc7e468cf9c9be676d01ae0c07bf9e2629078f0fdaaf7493befb6ba1**                        |
+| **Type**         | **Format**          | **Example**                                                            |
+| ---------------- | ------------------- | ---------------------------------------------------------------------- |
+| **IPv4 Address** | **x.x.x.x**         | **`8.8.8.8`**                                                          |
+| **IPv6 Address** | **Full/compressed** | **`2001:4860:4860::8888`**                                             |
+| **Domain**       | **FQDN**            | **`zonetransfer.org`**                                                 |
+| **URL**          | **Full URL**        | **`https://monolith.stone48tyranny.coupons/webclient`**                |
+| **MD5 Hash**     | **32 hex chars**    | **`d41d8cd98f00b204e9800998ecf8427e`**                                 |
+| **SHA1 Hash**    | **40 hex chars**    | **`da39a3ee5e6b4b0d3255bfef95601890afd80709`**                         |
+| **SHA256 Hash**  | **64 hex chars**    | **`50e82acecc7e468cf9c9be676d01ae0c07bf9e2629078f0fdaaf7493befb6ba1`** |
+
 
 
 
