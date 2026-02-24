@@ -11,7 +11,7 @@
 - **Threat Intelligence Platforms**
 - **Detection Engineering**
 
-Learning continuously and preparing for entry-level SOC roles.**
+**Learning continuously and preparing for entry-level SOC roles.**
 
 ###  Certifications
 -  **[![eJPT – INE](https://img.shields.io/badge/eJPT-Certified-2A81CB?style=for-the-badge&logo=Hack%20The%20Box&logoColor=white)](https://certs.ine.com/profile/sbrindha108174/wallet)**
@@ -68,3 +68,7 @@ Learning continuously and preparing for entry-level SOC roles.**
 - **Practicing incident response scenarios**
 - **Strengthening understanding of MITRE ATT&CK mappings**
 - **Preparing for entry-level SOC Analyst roles**
+
+###  Connect with Me
+- **[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/s-b-879871139)**
+- **[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com/brindhasham/AT)
