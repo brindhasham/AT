@@ -28,6 +28,8 @@ Learning continuously and preparing for entry-level SOC roles.**
   
 -- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard)**
 
+-- **[Phising Triage project](https://github.com/brindhasham/AT/tree/main/Phishing-Triage-Project)**
+
 **Security Monitoring & SIEM:**
 - **Splunk**
 - **ELK Stack (Elasticsearch, Logstash, Kibana)**
