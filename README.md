@@ -2,7 +2,7 @@
 
  **Junior SOC Analyst | Blue Team Enthusiast | Threat Detection & Analysis | eJPT | CompTIA Security+** | 
 
-**I build practical cybersecurity projects focused on real SOC workflows — including phishing investigation, log parsing, SIEM alerting, and threat intelligence integration.**
+**I build practical cybersecurity projects focused on real SOC workflows — including phishing investigation, log parsing, SIEM alerting, and threat intelligence integration. SOC-focused cybersecurity learner building detection, monitoring, and threat analysis projects aligned with real-world blue team workflows.**
 
 ### Technical Interests
 - **Security Monitoring & Incident Response**
@@ -45,6 +45,15 @@
 
 ### Badges: [Credly](https://www.credly.com/users/sbrindha)
 
+---
+
+## SOC Lab Environment
+
+- **Kali Linux & Ubuntu lab setup**
+- **Custom log generation and analysis testing**
+- **SIEM alert simulation**
+- **Threat intelligence enrichment workflows**
+  
 ---
 
 ### Current Focus
