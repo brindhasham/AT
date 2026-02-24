@@ -24,8 +24,9 @@ Learning continuously and preparing for entry-level SOC roles.**
 ### Badges: [Credly](https://www.credly.com/users/sbrindha)
 
 ## Featured Projects
-- **[LogSentinel Professional- Real Time Log Monitoring & Threat Detection system](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system)**
-- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard)**
+-- **[LogSentinel Professional- Real Time Log Monitoring & Threat Detection system](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system)**
+  
+-- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard)**
 
 **Security Monitoring & SIEM:**
 - **Splunk**
