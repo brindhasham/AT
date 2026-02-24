@@ -13,6 +13,28 @@
 
 **Learning continuously and preparing for entry-level SOC roles.**
 
+## Featured Projects
+-- **[LogSentinel Professional- Real Time Log Monitoring & Threat Detection system](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system)**
+  
+-- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard)**
+
+-- **[Phising Triage project](https://github.com/brindhasham/AT/tree/main/Phishing-Triage-Project)**
+
+## Core SOC Capabilities
+
+- **Log Analysis & Threat Hunting**
+- **SIEM Monitoring (Splunk, ELK, Wazuh)**
+- **Incident Triage & Investigation**
+- **Threat Intelligence Integration**
+- **Detection Engineering (MITRE ATT&CK aligned)**
+- **Python-Based Security Automation**
+
+---
+
+**Tools: Splunk | ELK | Wazuh | Wireshark | Python | Linux | VirusTotal API**
+
+---
+
 ###  Certifications
 -  **[![eJPT – INE](https://img.shields.io/badge/eJPT-Certified-2A81CB?style=for-the-badge&logo=Hack%20The%20Box&logoColor=white)](https://certs.ine.com/profile/sbrindha108174/wallet)**
 -  **[![API Security Fundamentals](https://img.shields.io/badge/API%20Security%20Fundamentals-'25%20Certified-007ACC?style=for-the-badge&logo=dependabot&logoColor=white)](https://www.credly.com/earner/earned/badge/c1a4e593-61bc-4a2e-81d5-7eab164b2950)**
@@ -23,51 +45,15 @@
 
 ### Badges: [Credly](https://www.credly.com/users/sbrindha)
 
-## Featured Projects
--- **[LogSentinel Professional- Real Time Log Monitoring & Threat Detection system](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system)**
-  
--- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard)**
-
--- **[Phising Triage project](https://github.com/brindhasham/AT/tree/main/Phishing-Triage-Project)**
-
-**Security Monitoring & SIEM:**
-- **Splunk**
-- **ELK Stack (Elasticsearch, Logstash, Kibana)**
-- **Wazuh**
-
-**Threat Intelligence:**
-- **VirusTotal API**
-- **AbuseIPDB**
-- **URLhaus**
-- **MITRE ATT&CK Framework**
-
-**Networking & Systems:**
-- **TCP/IP, DNS, HTTP/S**
-- **Linux (Kali, Ubuntu)**
- -**Windows Event Logs**
-- **Syslog**
-
-**Scripting & Automation:**
-- **Python (log parsing, API integration, automation)**
-- **Bash scripting**
-- **Regex**
-
-**Tools & Platforms:**
-- **Wireshark**
-- **Nmap**
-- **Burp Suite (basic)**
-- **Git & GitHub**
-- **Docker**
+---
 
 ### Current Focus
 
-- **Improving detection engineering skills**
-- **Writing custom log parsers and alert logic**
-- **Threat hunting using real-world log datasets**
-- **Building SOC automation scripts in Python**
-- **Practicing incident response scenarios**
-- **Strengthening understanding of MITRE ATT&CK mappings**
-- **Preparing for entry-level SOC Analyst roles**
+- **Improving detection rule creation**
+- **Writing custom correlation logic**
+- **Practicing real-world incident response scenarios**
+- **Mapping alerts to MITRE ATT&CK techniques**
+- **Strengthening blue team automation skills**
 
 ###  Connect with Me
 - **[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/s-b-879871139)**
