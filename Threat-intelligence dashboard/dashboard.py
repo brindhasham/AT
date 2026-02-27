@@ -56,6 +56,7 @@ def detect(ioc):
     if "." in i and "/" not in i: return "domain", i
     return "unknown", i
 
+# Threat intel requests (fn call req)
 @rate_lim("abuse")
 def abuse_q(i): return req("https://api.abuseipdb.com/api/v2/check", {"Key": KEY("ABUSE_KEY")}, None, "GET", params={"ipAddress": i, "maxAgeInDays": 90})
 
