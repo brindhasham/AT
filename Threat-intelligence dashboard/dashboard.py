@@ -203,45 +203,45 @@ with analyze_col:
 
 # Analysis Section - This will run analysis only if the button was clicked AND there's something to analyze(ioc)
 if analyze_btn and ioc:
-    indicators = ioc.split("\n") if bulk else [ioc]
-    indicators = [i.strip() for i in indicators if i.strip()][:5]
+    indicators = ioc.split("\n") if bulk else [ioc] # Split input by lines if in bulk mode
+    indicators = [i.strip() for i in indicators if i.strip()][:5] # Clean up each line (strip whitespaces) and take only first 5 iocs (limiting for performance)
     
     if len(indicators) > 1:
         st.info(f"Processing {len(indicators)} indicators...")
-    
+    #enrich function call
     for idx, indicator in enumerate(indicators):
-        with st.spinner(f"Analyzing {indicator[:50]}..."):
-            t, norm, res, score, log, enrich_list = enrich(indicator)
+        with st.spinner(f"Analyzing {indicator[:50]}..."): # Show a spinning wheel while working
+            t, norm, res, score, log, enrich_list = enrich(indicator) #output of call function: type, normalized value, results, risk score, log, and summary list
         
         if t == "unknown":
             st.error(f"Unable to identify indicator type: {indicator}")
             continue
             
-        # Determine severity
+        # Determining severity
         if score > 100:
             severity_class = "severity-critical"
             severity_text = "Critical"
-            border_color = "#dc2626"
+            border_color = "#dc2626" #red
         elif score > 50:
             severity_class = "severity-high"
             severity_text = "High"
-            border_color = "#ea580c"
+            border_color = "#ea580c" #orange
         elif score > 20:
             severity_class = "severity-medium"
             severity_text = "Medium"
-            border_color = "#d97706"
+            border_color = "#d97706"  #amber
         else:
             severity_class = "severity-low"
             severity_text = "Low"
-            border_color = "#059669"
+            border_color = "#059669" #green
         
-        # Main Card
+        # Main result Card
         with st.container():
             st.markdown(f'<div class="ioc-card" style="border-left: 4px solid {border_color};">', unsafe_allow_html=True)
             
             # Header Row
             header_col, type_col, score_col, sev_col, action_col = st.columns([3, 1, 1, 1, 1])
-            
+            #Creating 5 columns for: indicator name, type badge, score, severity, and export button.
             with header_col:
                 st.markdown(f"<b style='font-size: 1.1rem; color: #111827;'>{indicator[:80]}{'...' if len(indicator) > 80 else ''}</b>", unsafe_allow_html=True)
                 st.markdown(f"<code style='color: #6b7280; font-size: 0.85rem;'>{norm}</code>", unsafe_allow_html=True)
@@ -282,7 +282,7 @@ if analyze_btn and ioc:
                             <div class="source-value">{display_val}</div>
                         </div>
                         """, unsafe_allow_html=True)
-            
+            #enrich_list for each sources to display verdict
             # Details Expander
             with st.expander("Technical Details"):
                 detail_col1, detail_col2 = st.columns([3, 1])
@@ -295,7 +295,7 @@ if analyze_btn and ioc:
                             st.markdown(f"<div style='font-size: 0.8rem; color: #059669; font-family: monospace;'>[OK] {entry[5:]}</div>", unsafe_allow_html=True)
                         else:
                             st.markdown(f"<div style='font-size: 0.8rem; color: #dc2626; font-family: monospace;'>[ER] {entry[5:]}</div>", unsafe_allow_html=True)
-            
+         # A collapsible section showing;Left side: Raw JSON data from all sources; Right side: Processing log (what succeeded/failed)  
             st.markdown('</div>', unsafe_allow_html=True)
 
 # Sidebar - Feodo Tracker with Status Column
@@ -305,9 +305,13 @@ st.sidebar.markdown("<div style='font-size: 0.875rem; color: #6b7280; margin-bot
 try:
     feed_data = requests.get("https://feodotracker.abuse.ch/downloads/ipblocklist.json", timeout=10).json()
     if feed_data:
-        df = pd.DataFrame(feed_data).head(10)
+        df = pd.DataFrame(feed_data).head(10) #first 10 entries 
         st.sidebar.dataframe(df, hide_index=True, use_container_width=True)
     else:
         st.sidebar.info("No feed data available")
 except Exception as e:
     st.sidebar.error("Feed unavailable")
+#This sidebar fetches a live list of known bad IP addresses from Feodo Tracker Download the list from the internet
+#Take the first 10 entries
+#Display them in a table in the sidebar
+#If download fails, show an error message
