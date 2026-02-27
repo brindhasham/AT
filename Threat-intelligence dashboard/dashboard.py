@@ -74,45 +74,46 @@ def vt_q(i, t):
 def urlhaus_q(u):
     return req("https://urlhaus-api.abuse.ch/v1/url/", {"Auth-Key": KEY("URLHAUS_KEY")}, {"url": u}, "POST")
 
+# Color coding
 def card_color(value, is_ok):
     """Determine card background color based on value"""
     if not is_ok:
-        return "#6b7280"
+        return "#6b7280" # Gray - "We couldn't check"
     
     if isinstance(value, str):
         val_str = value.lower()
         if val_str == "malicious":
-            return "#dc2626"
+            return "#dc2626"  # Red - DANGER!
         elif val_str == "suspicious":
-            return "#ea580c"
+            return "#ea580c"  # Orange - Be careful
         elif val_str in ["clean", "no_results"]:
-            return "#059669"
+            return "#059669"  # Green - Safe
         else:
-            return "#6b7280"
+            return "#6b7280"   # Gray - "We couldn't check"
     
     try:
         n = float(value)
         if n > 50:
-            return "#dc2626"
+            return "#dc2626" # Red - DANGER!
         elif n > 20:
-            return "#ea580c"
+            return "#ea580c"  # Orange - Be careful
         elif n > 0:
-            return "#d97706"
+            return "#d97706"  # Yellow - Slightly concerning
         else:
-            return "#059669"
+            return "#059669"  # Green - Safe
     except (ValueError, TypeError):
-        return "#6b7280"
+        return "#6b7280"     # Gray - "We couldn't check"
 
 @st.cache_data(ttl=300)
 def enrich(ioc_raw):
     t, i, log, r = *detect(ioc_raw), [], {}
-    if t == "unknown": return t, i, {}, 0, log, [{"source": "error", "value": "Unknown IOC type", "ok": False}]
+    if t == "unknown": return t, i, {}, 0, log, [{"source": "error", "value": "Unknown IOC type", "ok": False}] # If I don't know what the input is, stop and report an error.
     with ThreadPoolExecutor(4) as e:
         f = {}
-        if t in ("ip4", "ip6"): f = {"abuse": e.submit(abuse_q, i), "otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)}
-        elif t in ("md5", "sha1", "sha256"): f = {"otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)}
-        elif t == "domain": f = {"otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)}
-        elif t == "url": f = {"vt": e.submit(vt_q, i, t), "haus": e.submit(urlhaus_q, i)}
+        if t in ("ip4", "ip6"): f = {"abuse": e.submit(abuse_q, i), "otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)} # IP addresses: Ask AbuseIPDB, OTX, and VirusTotal
+        elif t in ("md5", "sha1", "sha256"): f = {"otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)} # File hashes: Ask OTX and VirusTotal
+        elif t == "domain": f = {"otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)} # Domains: Ask OTX and VirusTotal
+        elif t == "url": f = {"vt": e.submit(vt_q, i, t), "haus": e.submit(urlhaus_q, i)}  # URLs: Ask VirusTotal and URLhaus
         for k, fu in f.items():
             try: r[k] = fu.result(timeout=15); log.append(f"PASS: {k}")
             except Exception as e: r[k] = {"ok": False, "error": str(e)}; log.append(f"FAIL: {k}")
