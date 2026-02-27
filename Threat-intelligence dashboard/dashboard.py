@@ -8,6 +8,7 @@ st.set_page_config(page_title="Threat Intelligence Platform", layout="wide", ini
 RATES, LAST = {"vt": 4, "abuse": 5, "otx": 60, "haus": 10}, {}
 KEY = lambda k: st.secrets.get(k, "")
 
+#Rate limiting
 def rate_lim(s):
     def d(f):
         @wraps(f)
