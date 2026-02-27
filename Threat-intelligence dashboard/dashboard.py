@@ -139,12 +139,18 @@ def enrich(ioc_raw):
             elif qs == "no_results": return "CLEAN"
             else: return qs
         return "unknown"
-    
+   #This function extracts all important data( numbers /status) from response of each intel(abuse, vt, otx, haus) 
     return t, i, r, int(s), log, [{"source": k, "value": get_value(k, v), "ok": v.get("ok")} for k, v in r.items()]
-
+#Malware Information Sharing Platform export function
 def misp_exp(ioc, t, s, r):
     lvl = "1" if s > 100 else "2" if s > 50 else "3" if s > 20 else "4"
     return json.dumps({"Event": {"info": f"TI: {ioc}", "threat_level_id": lvl, "Attribute": [{"type": {"ip4": "ip-dst", "ip6": "ip-dst", "md5": "md5", "sha1": "sha1", "sha256": "sha256", "domain": "domain", "url": "url"}.get(t, "text"), "value": ioc, "to_ids": s > 50, "comment": f"Risk: {s}"}] + [{"type": "comment", "value": f"{k}: {v.get('data') if v.get('ok') else v.get('error', 'failed')}"} for k, v in r.items()]}}, indent=2)
+
+#MISP is a special format for sharing threat information between organizations. This function creates a "report" that can be imported into MISP systems.
+# Threat level 1: Critical (score > 100)
+# Threat level 2: High (score > 50)
+# Threat level 3: Medium (score > 20)
+# Threat level 4: Low
 
 # UI
 st.markdown("""
@@ -163,31 +169,31 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header
+# Header (title and subtitle of the page)
 st.markdown('<div class="main-header">Threat Intelligence Analyzer</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Multi-source IOC enrichment and risk assessment platform</div>', unsafe_allow_html=True)
 
 # Bulk Toggle
-input_col, mode_col = st.columns([4, 1])
+input_col, mode_col = st.columns([4, 1]) # Create two columns - one wide (4 parts) for input, one narrow (1 part) for the toggle
 with input_col:
     if 'bulk_mode' not in st.session_state:
-        st.session_state.bulk_mode = False
+        st.session_state.bulk_mode = False #If this is the first visit, set bulk_mode to False
     
-    if st.session_state.bulk_mode:
+    if st.session_state.bulk_mode: #Bulk mode ON: Display a big text box where user can enter multiple items
         ioc = st.text_area(
             "Indicators of Compromise",
             placeholder="8.8.8.8\nexample.com\nmalicious-domain.com",
             height=120,
             label_visibility="collapsed"
         )
-    else:
+    else: # Bulk mode OFF: Show a single-line input for one item
         ioc = st.text_input(
             "Indicator of Compromise",
             placeholder="Enter IP address, domain, URL, or file hash...",
             label_visibility="collapsed"
         )
 
-with mode_col:
+with mode_col: #  A switch to toggle between single and bulk input modes
     bulk = st.toggle("Bulk Mode", key="bulk_mode", help="Enable multi-line input for up to 5 IOCs")
 
 # Analyze Button
@@ -195,7 +201,7 @@ analyze_col, _ = st.columns([1, 4])
 with analyze_col:
     analyze_btn = st.button("Analyze", type="primary", use_container_width=True)
 
-# Analysis Section - Only runs when button is clicked
+# Analysis Section - This will run analysis only if the button was clicked AND there's something to analyze(ioc)
 if analyze_btn and ioc:
     indicators = ioc.split("\n") if bulk else [ioc]
     indicators = [i.strip() for i in indicators if i.strip()][:5]
