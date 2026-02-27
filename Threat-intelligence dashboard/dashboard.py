@@ -30,8 +30,8 @@ def req(url, h=None, d=None, m="GET", t=10, params=None):
 @st.cache_data(ttl=300)
 def detect(ioc):
     i = ioc.strip().lower()
-    if re.match(r"^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$", i): return "ip4", i
-    if re.match(r"^(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$", i) or \
+    if re.match(r"^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$", i): return "ip4", i #ipv4
+    if re.match(r"^(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$", i) or \ #ipv6
        re.match(r"^([0-9a-f]{1,4}:){0,7}::([0-9a-f]{1,4}:){0,7}[0-9a-f]{1,4}$", i) or \
        re.match(r"^([0-9a-f]{1,4}:){1,7}:$", i) or \
        re.match(r"^::([0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4}$", i) or \
