@@ -25,6 +25,8 @@ def req(url, h=None, d=None, m="GET", t=10, params=None):
     try: r = requests.request(m, url, headers=h, data=d, params=params, timeout=t); r.raise_for_status(); return {"ok": True, "data": r.json()}
     except Exception as e: logging.error(f"{url}: {e}"); return {"ok": False, "error": str(e)[:100]}
 
+#Cached Detection Function: If same input is given within 5 minutes, return cached result instead of recalculating
+
 @st.cache_data(ttl=300)
 def detect(ioc):
     i = ioc.strip().lower()
