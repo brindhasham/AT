@@ -115,13 +115,22 @@ def enrich(ioc_raw):
         elif t == "domain": f = {"otx": e.submit(otx_q, i, t), "vt": e.submit(vt_q, i, t)} # Domains: Ask OTX and VirusTotal
         elif t == "url": f = {"vt": e.submit(vt_q, i, t), "haus": e.submit(urlhaus_q, i)}  # URLs: Ask VirusTotal and URLhaus
         for k, fu in f.items():
-            try: r[k] = fu.result(timeout=15); log.append(f"PASS: {k}")
-            except Exception as e: r[k] = {"ok": False, "error": str(e)}; log.append(f"FAIL: {k}")
+            try: r[k] = fu.result(timeout=15); log.append(f"PASS: {k}") #Wait for each intel to finish (up to 15 seconds each timeout period)
+            except Exception as e: r[k] = {"ok": False, "error": str(e)}; log.append(f"FAIL: {k}") #logging pass /fail status
+   
+    #Calculating Risk Score           
     s = sum([(r.get("abuse", {}).get("data", {}).get("data", {}).get("abuseConfidenceScore", 0) if r.get("abuse", {}).get("ok") else 0),
              ((r.get("vt", {}).get("data", {}).get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("malicious", 0) + r.get("vt", {}).get("data", {}).get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("suspicious", 0)) * 10 if r.get("vt", {}).get("ok") else 0),
              (r.get("otx", {}).get("data", {}).get("pulse_info", {}).get("count", 0) * 5 if r.get("otx", {}).get("ok") else 0),
              (50 if r.get("haus", {}).get("data", {}).get("query_status") == "ok" else 0)])
-    
+```Calculate a total "danger score" by adding up evidence from all sources:
+AbuseIPDB: Add their confidence score (0-100)
+VirusTotal: Add (malicious + suspicious detections) × 10
+OTX: Add (number of threat reports) × 5
+URLhaus: If found in their database, add 50 points 
+```
+
+
     def get_value(k, v):
         if not v.get("ok"): return v.get("error", "failed")
         if k == "abuse": return v.get("data", {}).get("data", {}).get("abuseConfidenceScore", 0)
