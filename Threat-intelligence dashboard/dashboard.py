@@ -123,14 +123,11 @@ def enrich(ioc_raw):
              ((r.get("vt", {}).get("data", {}).get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("malicious", 0) + r.get("vt", {}).get("data", {}).get("data", {}).get("attributes", {}).get("last_analysis_stats", {}).get("suspicious", 0)) * 10 if r.get("vt", {}).get("ok") else 0),
              (r.get("otx", {}).get("data", {}).get("pulse_info", {}).get("count", 0) * 5 if r.get("otx", {}).get("ok") else 0),
              (50 if r.get("haus", {}).get("data", {}).get("query_status") == "ok" else 0)])
-```Calculate a total "danger score" by adding up evidence from all sources:
-AbuseIPDB: Add their confidence score (0-100)
-VirusTotal: Add (malicious + suspicious detections) × 10
-OTX: Add (number of threat reports) × 5
-URLhaus: If found in their database, add 50 points 
-```
-
-
+#Calculate a total "danger score" by adding up evidence from all sources:
+#AbuseIPDB: Add their confidence score (0-100)
+#VirusTotal: Add (malicious + suspicious detections) × 10
+#OTX: Add (number of threat reports) × 5
+#URLhaus: If found in their database, add 50 points 
     def get_value(k, v):
         if not v.get("ok"): return v.get("error", "failed")
         if k == "abuse": return v.get("data", {}).get("data", {}).get("abuseConfidenceScore", 0)
