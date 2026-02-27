@@ -47,9 +47,11 @@ def detect(ioc):
             return "ip6", normalized.lower()
         except:
             return "ip6", i
+   #hash detection
     if re.match(r"^[a-f0-9]{32}$", i): return "md5", i
     if re.match(r"^[a-f0-9]{40}$", i): return "sha1", i
     if re.match(r"^[a-f0-9]{64}$", i): return "sha256", i
+    #URL, Domain, Unknown Detection
     if i.startswith("http"): return "url", i.rstrip("/").lower()
     if "." in i and "/" not in i: return "domain", i
     return "unknown", i
