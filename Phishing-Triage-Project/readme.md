@@ -144,3 +144,4 @@ bash
 
 **`Case_ID, File_Name, Subject, Sender, Sender_Domain, Reply_To, Reply_Domain, Domain_Mismatch, Sender_IP, URL_Count, URLs, Defanged_URLs, URL_Shortener_Used, Has_Attachment, Attachment_Count, Attachment_Names, Executable_Attachment, Attachment_SHA256s, Base64_Detected, SPF_Result, DKIM_Result, DMARC_Result, SPF_Normalized, DKIM_Normalized, DMARC_Normalized, YARA_Body_Matches, YARA_Attachment_Matches, Risk_Score, Risk_Reasons, MITRE_Techniques, Verdict`**
 
+![](https://github.com/brindhasham/AT/blob/main/Phishing-Triage-Project/image.png)
