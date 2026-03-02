@@ -18,7 +18,7 @@
   
 -- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard) -- A multi-source IOC (Indicator of Compromise) enrichment and risk assessment platform.**
 
--- **[Phising Triage project](https://github.com/brindhasham/AT/tree/main/Phishing-Triage-Project)**
+-- **[Phising Triage project](https://github.com/brindhasham/AT/tree/main/Phishing-Triage-Project) -- An automated phishing email analyzer tool to extract data and traige**
 
 ## Core SOC Capabilities
 
