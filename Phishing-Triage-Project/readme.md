@@ -1,6 +1,6 @@
 #  Phishing Email Analyzer with YARA Integration
 
-**This is nn automated phishing email triage tool that analyzes `.eml` files for indicators of phishing, calculates a weighted risk score, maps findings to MITRE ATT&CK techniques, and logs all results to a Google Sheet for team-based investigation.**
+**This is an automated phishing email triage tool that analyzes `.eml` files for indicators of phishing, calculates a weighted risk score, maps findings to MITRE ATT&CK techniques, and logs all results to a Google Sheet for team-based investigation.**
 
 ---
 ##  Features
