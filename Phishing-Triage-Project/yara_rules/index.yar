@@ -1,0 +1,5 @@
+include "phishing_keywords.yar"
+include "suspicious_attachments.yar"
+include "credential_theft.yar"
+include "obfuscation.yar"
+include "financial_fraud.yar"
