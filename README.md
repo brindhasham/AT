@@ -1,17 +1,3 @@
-#  Hi, I'm Brindha
-
- **Junior SOC Analyst | Blue Team Enthusiast | Threat Detection & Analysis | eJPT | CompTIA Security+** | 
-
-**I build practical cybersecurity projects focused on real SOC workflows — including phishing investigation, log parsing, SIEM alerting, and threat intelligence integration. SOC-focused cybersecurity learner building detection, monitoring, and threat analysis projects aligned with real-world blue team workflows.**
-
-### Technical Interests
-- **Security Monitoring & Incident Response**
-- **Log Analysis and Threat Hunting**
-- **Linux & Python Automation**
-- **Threat Intelligence Platforms**
-- **Detection Engineering**
-
-**Learning continuously and preparing for entry-level SOC roles.**
 
 ## Featured Projects
 -- **[LogSentinel Professional- Real Time Log Monitoring & Threat Detection system](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system) -- SOC Log Detection & Threat Intelligence Platform built with Python.**
@@ -19,19 +5,6 @@
 -- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard) -- A multi-source IOC (Indicator of Compromise) enrichment and risk assessment platform.**
 
 -- **[Phishing Triage project](https://github.com/brindhasham/AT/tree/main/Phishing-Triage-Project) -- An automated phishing email analyzer tool to extract data and traige**
-
-## Core SOC Capabilities
-
-- **Log Analysis & Threat Hunting**
-- **SIEM Monitoring (Splunk, ELK, Wazuh)**
-- **Incident Triage & Investigation**
-- **Threat Intelligence Integration**
-- **Detection Engineering (MITRE ATT&CK aligned)**
-- **Python-Based Security Automation**
-
----
-
-**Tools: Splunk | ELK | Wazuh | Wireshark | Python | Linux | VirusTotal API**
 
 ---
 
@@ -46,23 +19,6 @@
 ### Badges: [Credly](https://www.credly.com/users/sbrindha)
 
 ---
-
-## SOC Lab Environment
-
-- **Kali Linux & Ubuntu lab setup**
-- **Custom log generation and analysis testing**
-- **SIEM alert simulation**
-- **Threat intelligence enrichment workflows**
-  
----
-
-### Current Focus
-
-- **Improving detection rule creation**
-- **Writing custom correlation logic**
-- **Practicing real-world incident response scenarios**
-- **Mapping alerts to MITRE ATT&CK techniques**
-- **Strengthening blue team automation skills**
 
 ###  Connect with Me
 - **[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/s-b-879871139)**
