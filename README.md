@@ -1,6 +1,6 @@
 
 ## Featured Projects
--- **[LogSentinel Professional- Real Time Log Monitoring & Threat Detection system](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system) -- SOC Log Detection & Threat Intelligence Platform built with Python.**
+-- **[log analysis/debugging tool](https://github.com/brindhasham/AT/tree/main/LogSentinel-%20Real%20Time%20Log%20Monitoring%20%26%20Threat%20Detection%20system) -- SOC Log Detection & Threat Intelligence Platform built with Python.**
   
 -- **[Threat Intelligence Analyzer Dashboard](https://github.com/brindhasham/AT/tree/main/Threat-intelligence%20dashboard) -- A multi-source IOC (Indicator of Compromise) enrichment and risk assessment platform.**
 
